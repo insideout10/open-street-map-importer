@@ -13,6 +13,7 @@ import akka.routing.RoundRobinRouter
 import io.insideout.osm.masterworker.Master
 import io.insideout.osm.masterworker.MasterWorkerProtocol.{AllWorkSent, AllWorkCompleted}
 import scala.Some
+import io.insideout.osm.validators.{VersionValidator, ProximityValidator, ValidationError}
 
 sealed case class Import(url: String)
 
@@ -77,18 +78,14 @@ trait ImportService extends NodeFunctions with Logger {
     case _ => //
   }
 
-  def syncScore(node: DataNode): Int = {
-    if (isSameVersion(node))
-      0
-    else
-      -1
+  def validate(node: DataNode): Set[ValidationError] = {
+    Set(VersionValidator(), ProximityValidator())
+      .map( _.validate(node) ) // validate each node
+      .filter( _.isDefined )   // filter validation in error
+      .map( _.get )            // get the error
   }
 
-  def validateNode(node: DataNode): Boolean = {
-    val sameVersion = isSameVersion(node)
-    if (!sameVersion) logger.error("Node is not at the same version")
-    sameVersion
-  }
+  def notify(errors: Set[ValidationError]) = errors.foreach( e => println(e.message) )
 
   def importDataSet(url: String) = {
 
@@ -97,10 +94,11 @@ trait ImportService extends NodeFunctions with Logger {
     val nodes       = data \ "nodes" \ "node"
     val dn          = nodes map { DataNode.fromNode(_, ds.name) }
 
+    // open changeset
+    OpenStreetMap.openChangeset(ds.tags)
+
     Database.forURL(Configuration.databaseURL, driver = Configuration.databaseDriver) withSession {
 
-      // open changeset
-      OpenStreetMap.openChangeset(ds.tags)
       // mark all the nodes for delete.
       updateAllMarkDelete(ds.name)
       // save all the nodes.
@@ -109,8 +107,12 @@ trait ImportService extends NodeFunctions with Logger {
         // create the node in the database if it doesn't exist yet, and load existing OSM data if any.
         val node = mergeNode(n)
 
-        if (0 == syncScore(node)) syncOSM(node)
-//        if (validateNode(node)) syncOSM(node) // synchronize OSM data
+        validate(node) match {
+          case errors if errors.size == 0 =>
+            syncOSM(node)
+          case errors =>
+            notify(errors)
+        }
 
       }
       // delete all the nodes mark for delete.
@@ -130,6 +132,5 @@ trait ImportService extends NodeFunctions with Logger {
     OpenStreetMap.closeChangeset
     logger.info("changeset closed")
   }
-
 
 }

@@ -18,16 +18,16 @@ trait NodeFunctions extends Logger {
     .map { n => n.markDelete }
     .update(true)
 
-  def isSameVersion(node: DataNode): Boolean =
-    OpenStreetMap.getNodeVersion(node.osmId.get) == node.version
-
-  def deleteIfSameVersion(node: DataNode): Unit =
-    if (isSameVersion(node)) {
-      OpenStreetMap.deleteNode(node)
-      DataNodes.update(node.copy(deleted = true))
-    }
-    else
-      logger.error("Node " + node.osmId.get + " will not be delete because OSM has a newer version.")
+//  def isSameVersion(node: DataNode): Boolean =
+//    OpenStreetMap.getNodeVersion(node.osmId.get) == node.version
+//
+//  def deleteIfSameVersion(node: DataNode): Unit =
+//    if (isSameVersion(node)) {
+//      OpenStreetMap.deleteNode(node)
+//      DataNodes.update(node.copy(deleted = true))
+//    }
+//    else
+//      logger.error("Node " + node.osmId.get + " will not be delete because OSM has a newer version.")
 
 
   def createOnOSM(node: DataNode): DataNode = OpenStreetMap.createNode(node) match {
