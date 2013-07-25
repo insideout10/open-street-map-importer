@@ -43,6 +43,53 @@ trait ImportService extends NodeFunctions with Logger {
   val nodeServiceActorRef = actorRefFactory.actorOf(Props(new NodeServiceActor(masterActorRef.path))
     .withRouter(RoundRobinRouter(nrOfInstances = 2)), "node-service")
 
+  /**
+   * Create or update the node in the database, and cancel the mark delete flag.
+   *
+   * @param node The node to update or create.
+   * @return The created or updated node.
+   */
+  def mergeNode(node: DataNode): DataNode = {
+
+    // look for an existing node and merge data if any.
+    val n: DataNode = DataNodes.findOneByNodeIdAndDataSet(node.nodeId, node.dataSet) match {
+
+      case Some(existingNode) =>
+        node.copy(
+          id = existingNode.id, osmId = existingNode.osmId, version = existingNode.version,
+          markUpdate = !node.equalsNode(existingNode),
+          markDelete = false)
+
+      case _ => node.copy(markDelete = false)
+
+    }
+
+    // create or update the node. cancel the delete flag.
+    DataNodes.save(n)
+
+  }
+
+  def syncOSM(node: DataNode): Unit = node.osmId match {
+    case None =>
+      masterActorRef ! NodeServiceProtocol.Create(node) // createOnOSM(node)
+    case _ if node.markUpdate =>
+      masterActorRef ! NodeServiceProtocol.Update(node) // updateOnOSM(node)
+    case _ => //
+  }
+
+  def syncScore(node: DataNode): Int = {
+    if (isSameVersion(node))
+      0
+    else
+      -1
+  }
+
+  def validateNode(node: DataNode): Boolean = {
+    val sameVersion = isSameVersion(node)
+    if (!sameVersion) logger.error("Node is not at the same version")
+    sameVersion
+  }
+
   def importDataSet(url: String) = {
 
     val data        = XML.load(url)
@@ -59,29 +106,18 @@ trait ImportService extends NodeFunctions with Logger {
       // save all the nodes.
       dn foreach { n =>
 
-        val node = DataNodes.findOneByNodeIdAndDataSet(n.nodeId, n.dataSet) match {
-          case Some(existingNode) if ! n.equalsNode(existingNode) =>
-            n.copy(id = existingNode.id, osmId = existingNode.osmId, version = existingNode.version, markUpdate = true, markDelete = false)
-          case Some(existingNode) => existingNode.copy(markDelete = false)
-          case None => n.copy(id = Some(DataNodes.create(n)))
-        }
+        // create the node in the database if it doesn't exist yet, and load existing OSM data if any.
+        val node = mergeNode(n)
 
-        node.osmId match {
-          case Some(osmId) if node.markUpdate && isSameVersion(node) =>
-            masterActorRef ! NodeServiceProtocol.Update(node) // updateOnOSM(node)
-          case Some(osmId) if !node.markUpdate =>
-            DataNodes.update(node)
-          case Some(osmId) =>
-            logger.error("Node " + osmId + " will not be updated because OSM has a newer version.")
-          case None =>
-            masterActorRef ! NodeServiceProtocol.Create(node) // createOnOSM(node)
-        }
+        if (0 == syncScore(node)) syncOSM(node)
+//        if (validateNode(node)) syncOSM(node) // synchronize OSM data
+
       }
       // delete all the nodes mark for delete.
       DataNodes.filter { n => (n.osmId isNotNull) && (n.markDelete is true) && (n.deleted is false) }
         .map { n => n }
         .foreach { n =>
-          if (OpenStreetMap.getNodeVersion(n.osmId.get) == n.version.get)
+          if (OpenStreetMap.getNodeVersion(n.osmId.get) == n.version)
             masterActorRef ! NodeServiceProtocol.Delete(n)
         }
     }

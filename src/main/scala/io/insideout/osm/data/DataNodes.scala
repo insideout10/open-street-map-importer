@@ -42,4 +42,11 @@ object DataNodes extends Table[DataNode]("nodes") {
   def create(n: DataNode)(implicit session: Session): Long =
     forInsert returning id insert(n)
 
+  def save(n: DataNode)(implicit session: Session): DataNode = n.id match {
+    case None => // create
+      n.copy(id = Some(create(n)))
+    case _ => // update
+      update(n); n
+  }
+
 }

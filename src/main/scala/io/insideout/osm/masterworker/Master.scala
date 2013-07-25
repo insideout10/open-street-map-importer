@@ -80,7 +80,9 @@ class Master(resultHandler: ActorRef) extends Actor with ActorLogging {
       }
       workers -= worker
 
-    case AllWorkSent => allWorkReceived = true
+    case AllWorkSent =>
+      allWorkReceived = true
+      checkIfAllWorkIsDone()
 
     // Anything other than our own protocol is "work to be done"
     case work =>

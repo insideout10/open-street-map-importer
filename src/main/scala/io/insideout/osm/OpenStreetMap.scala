@@ -110,7 +110,18 @@ object OpenStreetMap {
    */
   def getNode(nodeId: Long) = request(Get("/node/" + nodeId.toString)).toString
 
-  def getNodeVersion(nodeId: Long) = (XML.loadString(getNode(nodeId)) \ "node" \ "@version").text.toLong
+  /**
+   * Get the version of the node on OSM. If the node does not exist (or it has been deleted), returns None.
+   * @param nodeId The node id.
+   * @return The node version or None.
+   */
+  def getNodeVersion(nodeId: Long): Option[Long] =
+    try {
+      val version = (XML.loadString(getNode(nodeId)) \ "node" \ "@version").text
+      Some(version.toLong)
+    } catch {
+      case _: Throwable => None
+    }
 
   private def request(r: HttpRequest) = r match {
     case Get(path)          => internalRequest(api + path, "GET")
