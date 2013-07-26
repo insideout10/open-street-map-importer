@@ -3,7 +3,7 @@
  */
 package io.insideout.osm.validators
 
-import io.insideout.osm.models.DataNode
+import io.insideout.osm.models.{DataSet, DataNode}
 import io.insideout.osm.OpenStreetMap
 
 /**
@@ -37,5 +37,5 @@ class VersionValidator extends Validator {
 }
 
 object VersionValidator {
-  def apply() = new VersionValidator()
+  def apply() = new VersionValidator
 }

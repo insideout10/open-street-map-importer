@@ -19,4 +19,10 @@ object Configuration {
     def maxThreads    = config.getInt("app.open-street-map.api.max-threads")
   }
 
+  object Overpass {
+    def apiURL        = config.getString("app.overpass.url")
+    def parameters    = config.getString("app.overpass.parameters")
+    def radius        = config.getInt("app.overpass.radius")
+  }
+
 }

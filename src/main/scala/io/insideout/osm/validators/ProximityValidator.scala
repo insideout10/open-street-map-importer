@@ -3,9 +3,10 @@
  */
 package io.insideout.osm.validators
 
-import io.insideout.osm.models.DataNode
+import io.insideout.osm.models.{DataSet, DataNode}
 import scala.xml.{NodeSeq, Node, XML}
 import scala.collection.mutable.StringBuilder
+import io.insideout.osm.Configuration
 
 /**
  *
@@ -13,8 +14,8 @@ import scala.collection.mutable.StringBuilder
  */
 class ProximityValidator extends Validator {
 
-  val apiURL = "http://overpass-api.de/api/interpreter?data=%5Btimeout%3A86400%5D%3B%20node%5Bamenity%3D%22charging_station%22%5D%28around%3A{{radius}}%2C{{latitude}}%2C{{longitude}}%29-%3E.b%3B%20.b%20out%20meta%3B"
-  val radius = 100
+  val apiURL = Configuration.Overpass.apiURL + "?" + Configuration.Overpass.parameters
+  val radius = Configuration.Overpass.radius
 
   def validate(node: DataNode): Option[ValidationError] = {
     findNode(node) match {
@@ -92,5 +93,5 @@ class ProximityValidator extends Validator {
 }
 
 object ProximityValidator {
-  def apply() = new ProximityValidator()
+  def apply() = new ProximityValidator
 }
