@@ -27,7 +27,8 @@ The POIs feed format is inspired from the [OpenStreetMap XML](https://wiki.opens
 			<tag k="key_1" v="value_1" />
 			<tag k="key_2" v="value_2" />
 			<tag k="key_…" v="value_…" />
-			</node>
+		</node>
+		...
 	</nodes>
 </set>
 ```
