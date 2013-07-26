@@ -1,5 +1,7 @@
 # OpenStreetMap Importer
 
+![contributions](https://raw.github.com/insideout10/open-street-map-importer/master/banner-open-street-map-importer.png "Title")
+
 ## Introduction
 
 The OpenStreetMap Importer is tool written in Scala that:
@@ -81,3 +83,30 @@ The location of configuration file is defined using the following command line p
     }
 }
 ```
+
+## Workflow
+
+### New POIs
+
+The importer looks for an existing POI in the local database by the POI id. If the POI is not found than a new record is created.
+
+### Existing POIs
+
+If a POI is found in the local database, then its tags are compared. If there's no different the POI will not be pushed to OpenStreetMap, *avoiding unnecessary operations and updates*.
+
+### Validation
+
+Before *making any operation* on OpenStreetMap, the POI is validated:
+
+1. if it is an existing POI (i.e. it has an OpenStreetMap ID and version), then the local version is compared with the OpenStreetMap version. If they don't match, meaning that the node has been updated on OpenStreetMap by another mapper, or if the node is gone, meaning it has been deleted by another mapper, validation fails.
+2. if it is a new POI, a check is made whether a node of the same kind (in our specific scenario *amenity=charging_station*) exists in a 100m. radius. If an existing node exists, validation fails.
+
+When validation fails, an error is written in the log and the Importer **does not perform any operation on OpenStreetMap**.
+
+### Result
+
+When validation is successful, the Importer performs the operations on OpenStreetMap and stores in the local database the resulting OpenStreetMap ID and version.
+
+## License
+
+This software is released under the GNU General Public License, version 3.0 (GPLv3)
