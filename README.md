@@ -1,6 +1,6 @@
 # OpenStreetMap Importer
 
-![contributions](https://raw.github.com/insideout10/open-street-map-importer/master/banner-open-street-map-importer.png "Title")
+![contributions](https://raw.github.com/insideout10/open-street-map-importer/master/banner-open-street-map-importer.png)
 
 ## Introduction
 
