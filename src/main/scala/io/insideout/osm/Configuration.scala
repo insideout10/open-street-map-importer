@@ -12,6 +12,10 @@ object Configuration {
   def databaseURL     = config.getString("app.database.url")
   def databaseDriver  = "com.mysql.jdbc.Driver" // config.getString("app.database.driver")
 
+  def host            = config.getString("app.server.host")
+  def port            = config.getInt("app.server.port")
+
+
   object OpenStreetMap {
     def apiURL        = config.getString("app.open-street-map.api.url")
     def username      = config.getString("app.open-street-map.api.username")
