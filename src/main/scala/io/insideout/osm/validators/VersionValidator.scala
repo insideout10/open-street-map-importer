@@ -13,8 +13,9 @@ import io.insideout.osm.OpenStreetMap
 class VersionValidator extends Validator {
 
   def validate(node: DataNode): Option[ValidationError] =  {
-    if (!node.osmId.isDefined)
-      return None
+
+    // we don't validate non-existing nodes.
+    if (!node.osmId.isDefined) return None
 
     val osmNodeVersion = OpenStreetMap.getNodeVersion(node.osmId.get)
 
