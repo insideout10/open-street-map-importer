@@ -2,7 +2,7 @@ seq(com.github.retronym.SbtOneJar.oneJarSettings: _*)
 
 name := "open-street-map-importer"
  
-version := "0.0.1"
+version := "1.0.0"
 
 artifactName in com.github.retronym.SbtOneJar.oneJar := { (sv: ScalaVersion, module: ModuleID, artifact: Artifact) =>
   artifact.name + "-" + module.revision + "." + artifact.extension
