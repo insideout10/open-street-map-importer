@@ -18,6 +18,10 @@ class ProximityValidator extends Validator {
   val radius = Configuration.Overpass.radius
 
   def validate(node: DataNode): Option[ValidationError] = {
+
+    // we don't validate existing nodes.
+    if (node.osmId.isDefined) return None
+
     findNode(node) match {
       case Some(message) => Some(ValidationError("Proximity Validator", message))
       case _ => None
